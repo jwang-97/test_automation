@@ -63,7 +63,7 @@
 
 
 
-import os, sys, re, logging, time
+import os, sys, re, logging, time, argparse
 import configparser
 import win32com.client as win32
 import xlwings as xw
@@ -155,7 +155,7 @@ def call_SAM_macro():
         #Launch Excel and Open Wrkbook
         xl=win32.Dispatch("Excel.Application")
         xl.Visible = True
-        xl.ScreenUpdating = False
+        xl.Application.ScreenUpdating = False
         str = os.getcwd()
         xl.Workbooks.Open(Filename = str + "\\test_SAM_v11.78.xlsm")
         time.sleep(5)
@@ -171,7 +171,7 @@ def call_SAM_macro():
 def call_Multi_macro():
     xl=win32.Dispatch("Excel.Application")
     xl.Visible = True
-    xl.ScreenUpdating = False
+    xl.Application.ScreenUpdating = False
     str = os.getcwd()
     xl.Workbooks.Open(Filename = str + "\\test_Multi-Bit_Compare_v2.52.xlsm")
     time.sleep(5)
@@ -185,7 +185,15 @@ if __name__ == "__main__":
     cf = configparser.ConfigParser()
     cf.read(os.getcwd() + r'\auto_test_config.ini', encoding='utf-8')
     logging.debug('config file path:' + os.getcwd() + r'\auto_test_config.ini')
-    org_result_path1, org_result_path2, template_path = input("enter cases-results path1 & cases-result path2 & ppt_template-path separated with ',':").split(',')
+    # org_result_path1, org_result_path2, template_path = input("enter cases-results path1 & cases-result path2 & ppt_template-path separated with ',':").split(',')
+    parser = argparse.ArgumentParser(description='input path argparse')
+    parser.add_argument('--path1', '-f', help='path1 property, non-essential parameters, have default values', default= "U:\result-backup\test-2021\test-20210416173550-lbo-0416cpc")
+    parser.add_argument('--path2', '-s', help='path2 property, non-essential parameters, have default values', default= "U:\result-backup\test-2021\test-20210702174422-lbo-0630cpc")
+    parser.add_argument('--template_path', '-t', help='template_path property, non-essential parameters, have default values', default="")
+    args = parser.parse_args()
+    org_result_path1 = args.path1
+    org_result_path2 = args.path2
+    template_path = args.template_path
     # org_result_path1 = input("plz enter the first path contain static & dynamic cases results:")
     # org_result_path2 = input("plz enter the second path contain static & dynamic cases results:")
     # template_path = input("plz enter the path of the ppt template:")
