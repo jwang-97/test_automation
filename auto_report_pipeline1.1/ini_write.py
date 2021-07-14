@@ -63,8 +63,10 @@
 
 
 
-import os, sys, re, logging
+import os, sys, re, logging, time
 import configparser
+import win32com.client as win32
+import xlwings as xw
 
 
 logging.basicConfig(format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s',
@@ -148,6 +150,37 @@ def write_template_path_ini(tpl_path):
     cf.write(open(os.getcwd() + r'\auto_test_config.ini', "w+", encoding='utf-8'))
     return None
     
+def call_SAM_macro():
+    #try:
+        #Launch Excel and Open Wrkbook
+        xl=win32.Dispatch("Excel.Application")
+        xl.Visible = True
+        xl.ScreenUpdating = False
+        str = os.getcwd()
+        xl.Workbooks.Open(Filename = str + "\\test_SAM_v11.78.xlsm")
+        time.sleep(5)
+        #xl.ThisWorkbook.Activate
+        # xl.Workbooks("Sheet1").Activate
+        #xl.Application.ScreenUpdating = True
+        logging.debug('Open SAMfile success')
+        #Run Macro
+        xl.Application.Run('test_SAM_v11.78.xlsm!Module1.Auto_test')
+        logging.debug('Auto_test')
+        xl.Application.ScreenUpdating = True
+      
+def call_Multi_macro():
+    xl=win32.Dispatch("Excel.Application")
+    xl.Visible = True
+    xl.ScreenUpdating = False
+    str = os.getcwd()
+    xl.Workbooks.Open(Filename = str + "\\test_Multi-Bit_Compare_v2.52.xlsm")
+    time.sleep(5)
+    logging.debug('Open Multifile success')
+    #Run Macro
+    xl.Application.Run('test_Multi-Bit_Compare_v2.52.xlsm!Module1.Auto_Dynamic')
+    logging.debug('Auto_Dynamic')
+    xl.Application.ScreenUpdating = True
+        
 if __name__ == "__main__":
     cf = configparser.ConfigParser()
     cf.read(os.getcwd() + r'\auto_test_config.ini', encoding='utf-8')
@@ -171,10 +204,13 @@ if __name__ == "__main__":
     config_dir = orgpath_sequence(org_result_path1, org_result_path2)
     ini_write(config_dir[0], config_dir[1], os.getcwd() + r'\auto_test_config.ini')
     
+    call_SAM_macro()
+    call_Multi_macro()
     
-    
-    run_command = "start " + os.getcwd() + r'\test_SAM_v11.78.xlsm'
-    os.system(run_command)
+    # run_command = "start " + os.getcwd() + r'\test_SAM_v11.78.xlsm'
+    # os.system(run_command)
     #ini_write(r'\\bgc-nas002\ideas_engine_folder\Share\Drilling_software_development\Work\Work-2021\release_testing_for_cpc\testing-cases', r'C:\Users\JWang294\Documents\projectfile\auto_test_config.ini')
     #config_sequence(r'\\bgc-nas002\ideas_engine_folder\Share\Drilling_software_development\Work\Work-2021\release_testing_for_cpc\testing-cases', r'\\bgc-nas002\ideas_engine_folder\Share\Drilling_software_development\Work\Work-2021\release_testing_for_cpc\testing-cases')
     
+    # C:\Users\JWang294\Documents\projectfile\test_config_cases\test-20210416173550-lbo-0416cpc
+    # C:\Users\JWang294\Documents\projectfile\test_config_cases\test-20210702174422-lbo-0630cpc
