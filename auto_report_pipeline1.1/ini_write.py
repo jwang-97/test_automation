@@ -173,11 +173,11 @@ def call_Multi_macro():
     xl.Visible = True
     xl.Application.ScreenUpdating = False
     str = os.getcwd()
-    xl.Workbooks.Open(Filename = str + "\\test_Multi-Bit_Compare_v2.52.xlsm")
+    xl.Workbooks.Open(Filename = str + "\\Multi_Bit_Compare_v2.52.xlsm")
     time.sleep(5)
     logging.debug('Open Multifile success')
     #Run Macro
-    xl.Application.Run('test_Multi-Bit_Compare_v2.52.xlsm!Module1.Auto_Dynamic')
+    xl.Application.Run('Multi_Bit_Compare_v2.52.xlsm!Module1.Auto_Dynamic')
     logging.debug('Auto_Dynamic')
     xl.Application.ScreenUpdating = True
         
