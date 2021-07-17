@@ -1,12 +1,35 @@
 from pptx import Presentation
-import pptx, pptx.util, glob, os, re ,logging
+import pptx, pptx.util, glob, os, re ,logging, csv
 # import scipy.misc
 # from pptx.util import Inches
 # import imageio
 import cv2
 import configparser
+import pandas as pd
 
 
+def read_doc_rop(org_dir1):
+    i = 0
+    doc_list = []
+    rop_list = []
+    for pic_dir in glob.glob(org_dir1 + r'\Contact\contact_script_test\summary_doc'):
+        # rop_data = pd.read_csv(pic_dir, sep = '\t',encoding = 'utf-8', errors="ignore")
+        # rop_data.head()
+        with open(pic_dir, "r", encoding="gbk", errors="ignore") as rop_data:
+            csv_reader = csv.reader(rop_data)
+            for row in csv_reader:
+                #save rop as a list
+                if i>=3:
+                    # rop_list[i-3] = list(str(row).split())[3]
+                    doc_list = str(row).split()
+                    print(isinstance(doc_list ,list))
+                    rop_list.append(doc_list[4])
+                    # print(rop_list[i-3])
+                    print(rop_list)
+                i += 1
+        break
+    return rop_list
+    
 def contact_pic_hooks(org_import_dir1, org_import_dir2, config_file_path):
     cf = configparser.ConfigParser()
     cf.read(config_file_path, encoding='utf-8')
@@ -34,13 +57,16 @@ def contact_pic_hooks(org_import_dir1, org_import_dir2, config_file_path):
     ipath = 0
     time_title1 = cf.get("profile_title", "title1")
     time_title2 = cf.get("profile_title", "title2")
-    text_array = ("ROP Controlled: " + "50" + " ft/hr", "Build"+ time_title1, "Build" + time_title2)
+    #get rop number
+    rop_num_list = read_doc_rop(org_import_dir1)
+    # text_array = ("ROP Controlled: " + "50" + " ft/hr", "Build"+ time_title1, "Build" + time_title2)
     # while ipath <= 1:
     for contact_pic_path1 in glob.glob(contact_pic_path[ipath]+'/*.jpg'):
         if re.search('Blade', contact_pic_path1) == None:
             pic_type = contact_pic_path1.split('\\')[-1]
-            bits_num_list = re.findall(r"\d+" ,str(pic_type.split('_')[0]))
-            bits_num = bits_num_list[-1]
+            #get number of pic to match rop
+            bits_num = list(re.findall(r"\d+" ,str(pic_type.split('_')[0])))[-1]
+            text_array = ("ROP Controlled: " + str(rop_num_list[int(bits_num) - 1]) + " ft/hr", "Build"+ time_title1, "Build" + time_title2)
             # contact_pic[0] = contact_pic_path1
             # pic_path = contact_pic_path1.split('\\')
             # print(pic_path[-1])
@@ -50,7 +76,7 @@ def contact_pic_hooks(org_import_dir1, org_import_dir2, config_file_path):
                 # slide.shapes.title.textframe.textrange.text = "test contact slide"
                 slide.shapes.title.text = "test contact slide"
                 # pic2 = slide.shapes.add_picture()
-                img1 = cv2.imread(contact_pic[0])
+                img1 = cv2.imread(contact_pic_path[0])
                 img2 = cv2.imread(contact_pic_path[1])
                 pic1 = slide.shapes.add_picture(contact_pic_path1, pic_left[0], pic_top, pic_width, pic_height)
                 pic2 = slide.shapes.add_picture(contact_pic_path2, pic_left[1], pic_top, pic_width, pic_height)
