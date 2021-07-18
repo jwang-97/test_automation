@@ -71,7 +71,7 @@ from pptx import Presentation
 import matplotlib.pyplot as plt
 import numpy as np
 
-
+config_ini_dir = os.getcwd() + r'\auto_test_config.ini'
 logging.basicConfig(format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s',
                     level=logging.DEBUG)
 
@@ -123,25 +123,25 @@ def ini_write(org_import_dir1, org_import_dir2, config_file_path):
 
 def orgpath_sequence(directory1, directory2):
     cf = configparser.ConfigParser()
-    cf.read(os.getcwd() + r'\auto_test_config.ini', encoding='utf-8')
+    cf.read(config_ini_dir, encoding='utf-8')
     date1 = directory1.split('\\')[-1]
     date2 = directory2.split('\\')[-1]
     if date1.split("-")[1] > date2.split("-")[1]:
         #print(date1.split("-")[1])
         cf.set("profile_title", "title1", str(date2.split("-")[1])[0:8])
         cf.set("profile_title", "title2", str(date1.split("-")[1])[0:8])
-        cf.write(open(os.getcwd() + r'\auto_test_config.ini', "w+", encoding='utf-8'))
+        cf.write(open(config_ini_dir, "w+", encoding='utf-8'))
         return directory2, directory1
     else:
         cf.set("profile_title", "title1", str(date1.split("-")[1])[0:8])
         #print(str(date1.split("-")[1])[0:8])
         cf.set("profile_title", "title2", str(date2.split("-")[1])[0:8])
-        cf.write(open(os.getcwd() + r'\auto_test_config.ini', "w+", encoding='utf-8'))
+        cf.write(open(config_ini_dir, "w+", encoding='utf-8'))
         return directory1, directory2
 
 def write_template_path_ini(tpl_path):
     cf = configparser.ConfigParser()
-    cf.read(os.getcwd() + r'\auto_test_config.ini', encoding='utf-8')
+    cf.read(config_ini_dir, encoding='utf-8')
     if os.path.exists(tpl_path) == False:
         template_file = os.getcwd() + r'\60095160_RevA_CPC_Template_v4.04.pptx'
         cf.set("templatefile_path", "template_path", template_file)
@@ -150,7 +150,7 @@ def write_template_path_ini(tpl_path):
     else:
         cf.set("templatefile_path", "template_path", tpl_path)
         logging.debug('ppttemplate-path:' + tpl_path)
-    cf.write(open(os.getcwd() + r'\auto_test_config.ini', "w+", encoding='utf-8'))
+    cf.write(open(config_ini_dir, "w+", encoding='utf-8'))
     return None
     
 def call_SAM_macro():
@@ -169,7 +169,12 @@ def call_SAM_macro():
         #Run Macro
         xl.Application.Run('test_SAM_v11.78.xlsm!Module1.Auto_test')
         logging.debug('Auto_test')
-        xl.Application.ScreenUpdating = True
+        # xl.Application.ScreenUpdating = True
+        xl.ScreenUpdating = True
+        # xl.Application.DisplayAlerts = False
+        xl.DisplayAlerts = False
+        xl.ActiveWorkbook.Close(SaveChanges:=False)
+        xl.Quit
       
 def call_Multi_macro():
     xl=win32.Dispatch("Excel.Application")
@@ -183,7 +188,12 @@ def call_Multi_macro():
     xl.Application.Run('Multi_Bit_Compare_v2.52.xlsm!Module1.Auto_Dynamic')
     logging.debug('Auto_Dynamic')
     xl.Application.ScreenUpdating = True
-
+    xl.ScreenUpdating = True
+    # xl.Application.DisplayAlerts = False
+    xl.DisplayAlerts = False
+    xl.ActiveWorkbook.Close(SaveChanges:=False)
+    xl.Quit
+    
 def read_doc_rop(org_dir1):
     i = 0
     doc_list = []
@@ -201,7 +211,7 @@ def read_doc_rop(org_dir1):
                     print(isinstance(doc_list ,list))
                     rop_list.append(doc_list[4])
                     # print(rop_list[i-3])
-                    print(rop_list)
+                    # print(rop_list)
                 i += 1
         break
     return rop_list
@@ -253,7 +263,7 @@ def contact_pic_hooks(org_import_dir1, org_import_dir2, config_file_path):
                 img2 = cv2.imread(contact_pic_path[1])
                 pic1 = slide.shapes.add_picture(contact_pic_path1, pic_left[0], pic_top, pic_width, pic_height)
                 pic2 = slide.shapes.add_picture(contact_pic_path2, pic_left[1], pic_top, pic_width, pic_height)
-                print (contact_pic_path1)
+                # print (contact_pic_path1)
                 i = 0
                 while i <= 2:
                     if i == 0:
@@ -310,15 +320,9 @@ def generate_contact_plots(org_dir1, org_dir2, config_path):
     pic_width = int(prs.slide_width*0.4)
     pic_height = int(prs.slide_height*0.6)
     for type in doc_type_list:
-        # plt.xticks(rotation=90)
-        # plt.gcf().autofmt_xdate()
-        # my_x_ticks = np.arange(10000,60000,10000)
-        # plt.xticks(my_x_ticks)
         # line 1 points
         x1 = read_summary_doc(org_dir1, "wob")
         y1 = read_summary_doc(org_dir1, type)
-        # xpoints = np.array(x1)
-        # ypoints = np.array(y1)
         # plotting the line 1 points 
         plt.plot(x1, y1, label = "build" + time_title1, color='c')
         # line 2 points
@@ -343,8 +347,6 @@ def generate_contact_plots(org_dir1, org_dir2, config_path):
             plot_title = "Torque-Wellington Shale @ 3ksi" 
             plt.axvline(x2[4], color='gold', lw=2, alpha=0.7)
             plt.ylim(0,10000)
-            # plt.hlines(0, xmin=0, xmax=10000, color='r', linestyle='-')
-            # plt.axis([10000,60000, 2000,10000])
         else:
             y_axis_label = "ROP (ft/hr)"
             plot_title = "ROP-Wellington Shale @ 3ksi" 
@@ -359,7 +361,7 @@ def generate_contact_plots(org_dir1, org_dir2, config_path):
         plt.legend()
         buffer_png = io.BytesIO()
         plt.savefig(buffer_png, format = "png")
-        plt.show()
+        # plt.show()
         # # function to show the plot
         slide = prs.slides.add_slide(prs.slide_layouts[1])
         pic1 = slide.shapes.add_picture(buffer_png, pic_left[0], pic_top, pic_width, pic_height)
@@ -369,8 +371,9 @@ def generate_contact_plots(org_dir1, org_dir2, config_path):
 
 if __name__ == "__main__":
     cf = configparser.ConfigParser()
-    cf.read(os.getcwd() + r'\auto_test_config.ini', encoding='utf-8')
-    logging.debug('config file path:' + os.getcwd() + r'\auto_test_config.ini')
+    # config_ini_dir = os.getcwd() + r'\auto_test_config.ini'
+    cf.read(config_ini_dir, encoding='utf-8')
+    logging.debug('config file path:' + config_ini_dir)
     # org_result_path1, org_result_path2, template_path = input("enter cases-results path1 & cases-result path2 & ppt_template-path separated with ',':").split(',')
     parser = argparse.ArgumentParser(description='input path argparse')
     parser.add_argument('--path1', '-f', help='path1 property, non-essential parameters, have default values', default= r"U:\result-backup\test-2021\test-20210416173550-lbo-0416cpc")
@@ -380,9 +383,6 @@ if __name__ == "__main__":
     org_result_path1 = args.path1
     org_result_path2 = args.path2
     template_path = args.template_path
-    # org_result_path1 = input("plz enter the first path contain static & dynamic cases results:")
-    # org_result_path2 = input("plz enter the second path contain static & dynamic cases results:")
-    # template_path = input("plz enter the path of the ppt template:")
     if os.path.exists(org_result_path1) == False:
         org_result_path1 = cf.get("original_path", "org_path1")
         logging.debug('Invalid path1, default read original_path in auto_test_config.ini')
@@ -394,13 +394,13 @@ if __name__ == "__main__":
     logging.debug('path1:' + org_result_path1)
     logging.debug('path2:' + org_result_path2)
     write_template_path_ini(template_path)
-    # config_dir = orgpath_sequence(cf.get("original_path", "org_path1"), cf.get("original_path", "org_path2"))
+    # write several types of path in config.ini 
     config_dir = orgpath_sequence(org_result_path1, org_result_path2)
-    ini_write(config_dir[0], config_dir[1], os.getcwd() + r'\auto_test_config.ini')
+    ini_write(config_dir[0], config_dir[1], config_ini_dir)
     
     call_SAM_macro()
-    generate_contact_plots(org_result_path1, org_result_path2, template_path)
-    contact_pic_hooks(org_result_path1, org_result_path2, template_path)
+    generate_contact_plots(org_result_path1, org_result_path2, config_ini_dir)
+    contact_pic_hooks(org_result_path1, org_result_path2, config_ini_dir)
     call_Multi_macro()
     
     # run_command = "start " + os.getcwd() + r'\test_SAM_v11.78.xlsm'
