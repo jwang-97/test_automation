@@ -315,10 +315,10 @@ def generate_contact_plots(org_dir1, org_dir2, config_path):
     time_title1 = cf.get("profile_title", "title1")
     time_title2 = cf.get("profile_title", "title2")
     doc_type_list = ("doc", "tq", "rop")
-    pic_left = [int(prs.slide_width*0.08), int(prs.slide_width*0.58)]
-    pic_top = int(prs.slide_height*0.3)
-    pic_width = int(prs.slide_width*0.4)
-    pic_height = int(prs.slide_height*0.6)
+    pic_left = int(prs.slide_width*0.1)
+    pic_top = int(prs.slide_height*0.08)
+    pic_width = int(prs.slide_width*0.6)
+    pic_height = int(prs.slide_height*0.8)
     for type in doc_type_list:
         # line 1 points
         x1 = read_summary_doc(org_dir1, "wob")
