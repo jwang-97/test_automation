@@ -1,68 +1,3 @@
-#import os, sys
-#import configParser
-
-##From https://www.pythonf.cn/read/97851
-#def ini_write(org_import_dir, config_file_path):
-#    cf = configParser.ConfigParser()
-#    cf.read(config_file_path)
-
-#    #s = cf.sections()
-#    #print 'section:', s
-
-#    #o = cf.options("baseconf")
-#    #print 'options:', o
-
-#    #v = cf.items("baseconf")
-#    #print 'db:', v
-#    #dynamic_path = config_file_path + "\\Dynammic\\links"
-#    #if exists(dynamic_path):
-#    #    for root,filenames in os.walk(dynamic_path):
-#    #        if name == "build":
-#    #            dynamic_path = os.path.join(root, name)
-#    #            cf.set("bit_base_directory", "bit1_directory", dynamic_path)
-#    #            cf.set("bit_base_directory", "bit2_directory", dynamic_path)
-#    g = os.walk(org_import_dir)
-#    for path, dir_list, file_list in g:
-#        for dir_name in dir_list:
-#            if dir_name == "E616":
-#                for sub_path, sub_dir_list, sub_file_list in os.walk(os.path.join(path, dir_name)):
-#                    for file_name in sub_file_list:
-#                        if file_name == "Wiley.des":
-#                            cf.set("DESfile_E616_path", "cases_path1", os.path.join(sub_pathh, file_name))
-#            elif dir_name == "stinger" or "axe" or "pdc" or "px" or "hyper" or "echo":
-#                for sub_path, sub_dir_list, sub_file_list in os.walk(os.path.join(path, dir_name)):
-#                    for file_name in sub_file_list:
-#                        if file_name == ".des":
-#                            type = dir_name.split('_')(-1)
-#                            cf.set("DESfile_" + type + "_path", "cases_path1", os.path.join(sub_path, file_name))
-#        #for file_name in file_list:
-#        #    if name  == "pdc":
-#        #        for root,filename in os.walk(name):
-
-#            #if name == "stinger:
-#            #elif name == "axe":
-#            #elif name == "pdc":
-#            #elif name == "px":
-#            #elif name == "hyper":
-#            #elif name == "E616":
-#            #elif name == "echo":
-            
-    
-#    config.write(open(config_file_path, "w"))
-#    #db_host = cf.get("baseconf", "host")
-#    #db_port = cf.getint("baseconf", "port")
-#    #db_user = cf.get("baseconf", "user")
-#    #db_pwd = cf.get("baseconf", "password")
-
-#    #print db_host, db_port, db_user, db_pwd
-
-#    #cf.set("baseconf", "db_pass", "123456")
-#    #cf.write(open("config_file_path", "w"))
-#if __name__ == "__main__":
-#    ini_write(r'C:\Users\JWang294\Documents\projectfile\static-cases\Static', r'C:\Users\JWang294\Documents\projectfile\auto_test_config.ini')
-
-
-
 import os, sys, re, logging, time, argparse, pptx, pptx.util, glob, re, csv, cv2, io
 import configparser
 import win32com.client as win32
@@ -246,7 +181,7 @@ def contact_pic_hooks(org_import_dir1, org_import_dir2, config_file_path):
     cf.read(config_file_path, encoding='utf-8')
     template_path = cf.get("merge_template", "dirct")
     prs = Presentation(template_path)
-    org_import_dir = (org_import_dir1, org_import_dir2)
+    # org_import_dir = (org_import_dir1, org_import_dir2)
     contact_pic_path = ['','']
     contact_pic = ['','']
     i = 0
@@ -267,14 +202,13 @@ def contact_pic_hooks(org_import_dir1, org_import_dir2, config_file_path):
     #get rop number
     rop_num_list = read_doc_rop(1)
     inum = 0
-    for contact_pic1 in contact_pic_path[0]:
+    while ipath < len(contact_pic_path[0]):
+    # for contact_pic1 in contact_pic_path[0]:
         # generate plots in order
+        # if re.search('Blade', contact_pic1) == None and re.findall(r"\d+", contact_pic1)[-1] == str(inum + 1):
+        contact_pic1 = list(contact_pic_path[0])[ipath]
         if re.search('Blade', contact_pic1) == None and re.findall(r"\d+", contact_pic1)[-1] == str(inum + 1):
             pic_type = contact_pic1.split('\\')[-1]
-            # pic_num = int(str(pic_type.split('_')[0])[-1])
-            #get number of pic to match rop
-            # bits_num = list(re.findall(r"\d+" ,str(pic_type.split('_')[0])))[-1]
-            # text_array = ("ROP Controlled: " + str(rop_num_list[int(bits_num) - 1]) + " ft/hr", "Build"+ time_title1, "Build" + time_title2)
             text_array = ("ROP Controlled: " + str(rop_num_list[inum]) + " ft/hr", "Build"+ time_title1, "Build" + time_title2)
             for contact_pic2 in contact_pic_path[1]:
                 if re.search(pic_type, contact_pic2) != None and re.search('Blade', contact_pic2) == None:
@@ -297,7 +231,10 @@ def contact_pic_hooks(org_import_dir1, org_import_dir2, config_file_path):
                         p1.text = text_array[i]
                         p1.font.size = pptx.util.Pt(25)
                         i+=1
+            #redefine ipath,refreash the loop
+            ipath = -1
             inum += 1
+        ipath += 1
     prs.save(template_path)
 
 def read_summary_doc(case_num, list_type):
@@ -342,6 +279,28 @@ def generate_contact_plots(org_dir1, org_dir2, config_path):
     pic_top = int(prs.slide_height*0.1)
     pic_width = int(prs.slide_width*0.6)
     pic_height = int(prs.slide_height*0.8)
+    slide = prs.slides.add_slide(prs.slide_layouts[1])
+    slide.shapes.title.text = "Contact Analysis Inputs"
+    iCase = 0
+    Input_name_list = str(cf.get("Contact_Analysis_Inputs", "Inputs_name")).split('|')
+    Input_data_list = str(cf.get("Contact_Analysis_Inputs", "Inputs_data")).split('|')
+    while iCase < 2: 
+        if iCase == 0:
+            tb = slide.shapes.add_textbox(950000, 1600000, 1, 1)
+        else:
+            tb = slide.shapes.add_textbox(8000000, 1600000, 1, 1)
+        p1 = tb.text_frame.add_paragraph()
+        if iCase == 0:
+            list = Input_name_list
+        else:
+            list = Input_data_list
+        f = io.StringIO()
+        for name in list:
+            f.write(name + '\n')
+        p1.text = f.getvalue()
+        f.close()
+        p1.font.size = pptx.util.Pt(29)
+        iCase += 1
     for type in doc_type_list:
         # line 1 points
         x1 = read_summary_doc(1, "wob")
@@ -368,7 +327,7 @@ def generate_contact_plots(org_dir1, org_dir2, config_path):
         elif type == "tq":
             y_axis_label = "Torque (ft-lbf)"
             plot_title = "Torque-Wellington Shale @ 3ksi" 
-            plt.axvline(x2[4], color='gold', lw=2, alpha=0.7)
+            plt.axvline(x2[4], color='orange', lw=2, alpha=0.7)
             plt.ylim(0,10000)
         else:
             y_axis_label = "ROP (ft/hr)"
@@ -386,7 +345,7 @@ def generate_contact_plots(org_dir1, org_dir2, config_path):
         plt.savefig(buffer_png, format = "png")
         # plt.show()
         # # function to show the plot
-        slide = prs.slides.add_slide(prs.slide_layouts[1])
+        slide = prs.slides.add_slide(prs.slide_layouts[0])
         pic1 = slide.shapes.add_picture(buffer_png, pic_left, pic_top, pic_width, pic_height)
         plt.close()
         buffer_png.close()
@@ -426,8 +385,7 @@ if __name__ == "__main__":
     contact_pic_hooks(config_dir[0], config_dir[1], config_ini_dir)
     call_Multi_macro()
     
-    # run_command = "start " + os.getcwd() + r'\test_SAM_v11.78.xlsm'
-    # os.system(run_command)
+
     #ini_write(r'\\bgc-nas002\ideas_engine_folder\Share\Drilling_software_development\Work\Work-2021\release_testing_for_cpc\testing-cases', r'C:\Users\JWang294\Documents\projectfile\auto_test_config.ini')
     #config_sequence(r'\\bgc-nas002\ideas_engine_folder\Share\Drilling_software_development\Work\Work-2021\release_testing_for_cpc\testing-cases', r'\\bgc-nas002\ideas_engine_folder\Share\Drilling_software_development\Work\Work-2021\release_testing_for_cpc\testing-cases')
     # C:\Users\JWang294\Documents\projectfile\test_config_cases\test-20210416173550-lbo-0416cpc
