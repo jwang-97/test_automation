@@ -20,8 +20,10 @@ def ini_write(org_import_dir1, org_import_dir2, config_file_path):
     i = 1
     while (i<3):
         g = os.walk(org_import_dir[i-1])
+        #write file_path in ini-config file
         for path, dir_list, file_list in g:
             for dir_name in dir_list:
+                #write E616 file_path
                 if re.search("E616", dir_name) != None:
                     for sub_path, sub_dir_list, sub_file_list in os.walk(os.path.join(path, dir_name)):
                         for file_name in sub_file_list:
@@ -29,6 +31,7 @@ def ini_write(org_import_dir1, org_import_dir2, config_file_path):
                                 cf.set("DESfile_E616_path", "cases_path"+ str(i), os.path.join(sub_path, file_name))
                                 #cf.write(open(config_file_path, "w+", encoding='utf-8'))
                                 break
+                #write stinger file_path
                 elif re.search("stinger", dir_name) or re.search("axe", dir_name) or re.search("pdc", dir_name) or re.search("px", dir_name) or  re.search("hyper", dir_name) or  re.search("echo", dir_name) != None:
                     for sub_path, sub_dir_list, sub_file_list in os.walk(os.path.join(path, dir_name)):
                         for file_name in sub_file_list:
@@ -36,6 +39,7 @@ def ini_write(org_import_dir1, org_import_dir2, config_file_path):
                                 type_name = dir_name.split('_')
                                 cf.set("DESfile_" + type_name[1] + "_path", "cases_path"+ str(i), os.path.join(sub_path, file_name))
                                 #cf.write(open(config_file_path, "w+", encoding='utf-8'))
+                #write dynamic file_path
                 elif re.search("links", dir_name) != None:
                     for sub_path, sub_dir_list, sub_file_list in os.walk(os.path.join(path, dir_name)):
                         for sub_dir_name in sub_dir_list:
@@ -49,6 +53,7 @@ def ini_write(org_import_dir1, org_import_dir2, config_file_path):
                                 break
                         if bln_build:
                             break
+                #write contact file_path
                 elif re.search("contact_script_test", dir_name) != None:
                     for sub_path, sub_dir_list, sub_file_list in os.walk(os.path.join(path, dir_name)):
                         for file_name in sub_file_list:
@@ -68,6 +73,7 @@ def ini_write(org_import_dir1, org_import_dir2, config_file_path):
         cf.write(open(config_file_path, "w+", encoding='utf-8'))
         i += 1
 
+#write release_time into config.ini
 def orgpath_sequence(directory1, directory2):
     cf = configparser.ConfigParser()
     cf.read(config_ini_dir, encoding='utf-8')
@@ -86,6 +92,7 @@ def orgpath_sequence(directory1, directory2):
         cf.write(open(config_ini_dir, "w+", encoding='utf-8'))
         return directory1, directory2
 
+#verification ppt template path
 def write_template_path_ini(tpl_path):
     cf = configparser.ConfigParser()
     cf.read(config_ini_dir, encoding='utf-8')
@@ -99,7 +106,8 @@ def write_template_path_ini(tpl_path):
         logging.debug('ppttemplate-path:' + tpl_path)
     cf.write(open(config_ini_dir, "w+", encoding='utf-8'))
     return None
-    
+
+#call static macros in SAM
 def call_SAM_macro():
     #try:
         #Launch Excel and Open Wrkbook
@@ -124,6 +132,7 @@ def call_SAM_macro():
         xl.ActiveWorkbook.Close()
         xl.Quit
       
+#call dynamic macros in Multi
 def call_Multi_macro():
     xl=win32.Dispatch("Excel.Application")
     xl.Visible = True
@@ -143,6 +152,7 @@ def call_Multi_macro():
     xl.ActiveWorkbook.Close()
     xl.Quit
     
+#get contact rop-list in summary_doc
 def read_doc_rop(iCase):
     i = 0
     doc_list = []
@@ -168,6 +178,7 @@ def read_doc_rop(iCase):
             # break
     return rop_list
 
+#get pictures under the path
 def get_img_file(path_name):
     imagelist = []
     for parent, dirnames, filenames in os.walk(path_name):
@@ -176,6 +187,7 @@ def get_img_file(path_name):
                 imagelist.append(os.path.join(parent, filename))
         return imagelist
 
+#get contact pictures
 def contact_pic_hooks(org_import_dir1, org_import_dir2, config_file_path):
     cf = configparser.ConfigParser()
     cf.read(config_file_path, encoding='utf-8')
@@ -237,6 +249,7 @@ def contact_pic_hooks(org_import_dir1, org_import_dir2, config_file_path):
         ipath += 1
     prs.save(template_path)
 
+#get contact-list in summary_doc
 def read_summary_doc(case_num, list_type):
     i = 0
     iCase = 0
@@ -266,6 +279,7 @@ def read_summary_doc(case_num, list_type):
             i += 1
     return axis_num_list
 
+#generate contact plots
 def generate_contact_plots(org_dir1, org_dir2, config_path):
     cf = configparser.ConfigParser()
     cf.read(config_path, encoding='utf-8')
