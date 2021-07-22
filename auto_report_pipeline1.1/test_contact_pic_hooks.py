@@ -1,11 +1,11 @@
 from pptx import Presentation
-import pptx, pptx.util, glob, os, re ,logging, csv
+import pptx, pptx.util, glob, re, csv
 # import scipy.misc
 # from pptx.util import Inches
 # import imageio
 import cv2
 import configparser
-import pandas as pd
+# import pandas as pd
 
 
 def read_doc_rop(org_dir1):
@@ -37,7 +37,7 @@ def contact_pic_hooks(org_import_dir1, org_import_dir2, config_file_path):
     prs = Presentation(template_path)
     org_import_dir = (org_import_dir1, org_import_dir2)
     contact_pic_path = ['','']
-    contact_pic = ['','']
+    # contact_pic = ['','']
     i = 0
     while i <= 1:
         # org_path = os.walk(org_import_dir[i+1])

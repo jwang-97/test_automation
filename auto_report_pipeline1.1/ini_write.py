@@ -1,12 +1,13 @@
 import os, sys, re, logging, time, argparse, pptx, pptx.util, glob, re, csv, cv2, io
 import configparser
 import win32com.client as win32
-import xlwings as xw
+# import xlwings as xw
 from pptx import Presentation
 import matplotlib.pyplot as plt
-import numpy as np
+# import numpy as np
+from pptx.util import Cm
+import pandas as pd
 
-config_ini_dir = os.getcwd() + r'\auto_test_config.ini'
 logging.basicConfig(format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s',
                     level=logging.DEBUG)
 
@@ -60,12 +61,22 @@ def ini_write(org_import_dir1, org_import_dir2, config_file_path):
                             if re.search('summary_doc', file_name) != None:
                                 # type_name = dir_name.split('_')
                                 cf.set("contact_summary_doc_dir", "cases_path"+ str(i), os.path.join(sub_path, file_name))
-                # elif re.search("contact_script_test", dir_name) != None:
-                #     for sub_path, sub_dir_list, sub_file_list in os.walk(os.path.join(path, dir_name)):
                         for sub_dir_name in sub_dir_list:
                             if re.search('utility_files', sub_dir_name) != None:
                                 # type_name = dir_name.split('_')
                                 cf.set("contact_pic_dir", "cases_path"+ str(i), os.path.join(sub_path, sub_dir_name))
+                #write other-type static file_path 
+                elif re.search("6", dir_name) != None and re.search("_", dir_name) != None and len(dir_name.split("_")) == 2:
+                    for sub_path, sub_dir_list, sub_file_list in os.walk(os.path.join(path, dir_name)):
+                        for file_name in sub_file_list:
+                            if re.search('.des', file_name) != None:
+                                type_name = dir_name.split('_')
+                                section_name = "DESfile_" + type_name[1] + "_path"
+                                if not cf.has_section(section_name):
+                                    cf.add_section(section_name)
+                                #     cf.set(section_name, "cases_path"+ str(i), os.path.join(sub_path, file_name))
+                                # else:
+                                cf.set(section_name, "cases_path"+ str(i), os.path.join(sub_path, file_name))
                 else:
                     logging.debug(dir_name + ' incompatible')
                     #print(dir_name + ' incompatible')
@@ -74,28 +85,28 @@ def ini_write(org_import_dir1, org_import_dir2, config_file_path):
         i += 1
 
 #write release_time into config.ini
-def orgpath_sequence(directory1, directory2):
+def orgpath_sequence(directory1, directory2 ,config_path):
     cf = configparser.ConfigParser()
-    cf.read(config_ini_dir, encoding='utf-8')
+    cf.read(config_path, encoding='utf-8')
     date1 = directory1.split('\\')[-1]
     date2 = directory2.split('\\')[-1]
     if date1.split("-")[1] > date2.split("-")[1]:
         #print(date1.split("-")[1])
         cf.set("profile_title", "title1", str(date2.split("-")[1])[0:8])
         cf.set("profile_title", "title2", str(date1.split("-")[1])[0:8])
-        cf.write(open(config_ini_dir, "w+", encoding='utf-8'))
+        cf.write(open(config_path, "w+", encoding='utf-8'))
         return directory2, directory1
     else:
         cf.set("profile_title", "title1", str(date1.split("-")[1])[0:8])
         #print(str(date1.split("-")[1])[0:8])
         cf.set("profile_title", "title2", str(date2.split("-")[1])[0:8])
-        cf.write(open(config_ini_dir, "w+", encoding='utf-8'))
+        cf.write(open(config_path, "w+", encoding='utf-8'))
         return directory1, directory2
 
 #verification ppt template path
-def write_template_path_ini(tpl_path):
+def write_template_path_ini(tpl_path, config_path):
     cf = configparser.ConfigParser()
-    cf.read(config_ini_dir, encoding='utf-8')
+    cf.read(config_path, encoding='utf-8')
     if os.path.exists(tpl_path) == False:
         template_file = os.getcwd() + r'\60095160_RevA_CPC_Template_v4.04.pptx'
         cf.set("templatefile_path", "template_path", template_file)
@@ -104,7 +115,7 @@ def write_template_path_ini(tpl_path):
     else:
         cf.set("templatefile_path", "template_path", tpl_path)
         logging.debug('ppttemplate-path:' + tpl_path)
-    cf.write(open(config_ini_dir, "w+", encoding='utf-8'))
+    cf.write(open(config_path, "w+", encoding='utf-8'))
     return None
 
 #call static macros in SAM
@@ -153,12 +164,12 @@ def call_Multi_macro():
     xl.Quit
     
 #get contact rop-list in summary_doc
-def read_doc_rop(iCase):
+def read_doc_rop(iCase, config_path):
     i = 0
     doc_list = []
     rop_list = []
     cf = configparser.ConfigParser()
-    cf.read(config_ini_dir, encoding='utf-8')
+    cf.read(config_path, encoding='utf-8')
     pic_dir = cf.get("contact_summary_doc_dir", "cases_path" + str(iCase))
     # for pic_dir in glob.glob(org_dir1 + r'**\Contact\contact_script_test\summary_doc'):
         # rop_data = pd.read_csv(pic_dir, sep = '\t',encoding = 'utf-8', errors="ignore")
@@ -170,7 +181,7 @@ def read_doc_rop(iCase):
             if i>=3:
                 # rop_list[i-3] = list(str(row).split())[3]
                 doc_list = str(row).split()
-                print(isinstance(doc_list ,list))
+                # print(isinstance(doc_list ,list))
                 rop_list.append(doc_list[4])
                 # print(rop_list[i-3])
                 # print(rop_list)
@@ -188,14 +199,15 @@ def get_img_file(path_name):
         return imagelist
 
 #get contact pictures
-def contact_pic_hooks(org_import_dir1, org_import_dir2, config_file_path):
+# def contact_pic_hooks(org_import_dir1, org_import_dir2, config_file_path):
+def contact_pic_hooks(config_file_path):
     cf = configparser.ConfigParser()
     cf.read(config_file_path, encoding='utf-8')
     template_path = cf.get("merge_template", "dirct")
     prs = Presentation(template_path)
     # org_import_dir = (org_import_dir1, org_import_dir2)
     contact_pic_path = ['','']
-    contact_pic = ['','']
+    # contact_pic = ['','']
     i = 0
     while i <= 1:
         #get list of contact_pictures' path
@@ -212,7 +224,7 @@ def contact_pic_hooks(org_import_dir1, org_import_dir2, config_file_path):
     time_title1 = cf.get("profile_title", "title1")
     time_title2 = cf.get("profile_title", "title2")
     #get rop number
-    rop_num_list = read_doc_rop(1)
+    rop_num_list = read_doc_rop(1, config_file_path)
     inum = 0
     while ipath < len(contact_pic_path[0]):
     # for contact_pic1 in contact_pic_path[0]:
@@ -250,7 +262,7 @@ def contact_pic_hooks(org_import_dir1, org_import_dir2, config_file_path):
     prs.save(template_path)
 
 #get contact-list in summary_doc
-def read_summary_doc(case_num, list_type):
+def read_summary_doc(case_num, list_type, config_path):
     i = 0
     iCase = 0
     # doc_list = []
@@ -258,7 +270,7 @@ def read_summary_doc(case_num, list_type):
     # Connect zero point
     axis_num_list.append(0)
     cf = configparser.ConfigParser()
-    cf.read(config_ini_dir, encoding='utf-8')
+    cf.read(config_path, encoding='utf-8')
     doc_dir = cf.get("contact_summary_doc_dir", "cases_path" + str(case_num))
     # for pic_dir in glob.glob(org_dir + r'\**\contact_script_test\summary_doc'):
     with open(doc_dir, "r", encoding="gbk", errors="ignore") as rop_data:
@@ -317,13 +329,13 @@ def generate_contact_plots(org_dir1, org_dir2, config_path):
         iCase += 1
     for type in doc_type_list:
         # line 1 points
-        x1 = read_summary_doc(1, "wob")
-        y1 = read_summary_doc(1, type)
+        x1 = read_summary_doc(1, "wob", config_path)
+        y1 = read_summary_doc(1, type, config_path)
         # plotting the line 1 points 
         plt.plot(x1, y1, label = "build" + time_title1, color='c')
         # line 2 points
-        x2 = read_summary_doc(2, "wob")
-        y2 = read_summary_doc(2, type)
+        x2 = read_summary_doc(2, "wob", config_path)
+        y2 = read_summary_doc(2, type, config_path)
         # plotting the line 2 points 
         plt.plot(x2, y2, label = "build" + time_title2, color='m')
         # add Horizontal line
@@ -365,7 +377,69 @@ def generate_contact_plots(org_dir1, org_dir2, config_path):
         buffer_png.close()
     prs.save(template_path)
 
+def function_check_sheet(config_path):
+    cf = configparser.ConfigParser()
+    cf.read(config_path, encoding='utf-8')
+    template_path = cf.get("merge_template", "dirct")
+    prs = Presentation(template_path)
+    df = pd.DataFrame(data={'Tool/Program': None,
+                            'Pass/Fail': None,
+                        },
+                    index = ['I-Design (idd) / Scale', 'I-Design (idd) / Modify Cutter/Position',
+                             'IDEAS Static (ids) / Normal Functionality', 'IDEAS Static (ids) / Multi-Core processing',
+                             'IDEAS Dynamic (id3) / Normal Functionality', 'IDEAS Dynamic (id3) / Multi-Core processing',
+                             'IDEAS Autoforce (ida) / Force Balance Optimization', 'IDEAS3 Utility (id3u)',
+                             'IDEAS Analysis Request (iAR) / Create Projects (ideasbuild'+cf.get("profile_title", "title2")+')', 'Bit Design Toolbox / IAR Project Renamer', 
+                             'Bit Design Toolbox / Rollback IDEAS Project', 'IDM / Create/Run Projectgroup',
+                             'SAM', 'Multi-Bit']
+                    )
+    slide = prs.slides[3]
+    # slide = prs.slides.add_slide(prs.slide_layouts[1])
+    # slide.shapes.title.text = "Contact Analysis Comparison - Blade Top Contact"
+    rows = 15
+    columns = 2
+    left = Cm(3)   
+    top = Cm(4) 
+    width = Cm(32) 
+    height = Cm(0.1)
+    table = slide.shapes.add_table(rows=rows,
+                            cols=columns,
+                            left=left,
+                            top=top,
+                            width=width,
+                            height=height
+                            )
+    table = table.table
+    # colunm_name
+    header = df.columns
+    for i, h in enumerate(header):
+        cell = table.cell(0, i)
+        cell.text = h
+    # row_name
+    row_names = df.index
+    for i, r in enumerate(row_names):
+        cell = table.cell(i+1, 0)
+        cell.text = r
+    prs.save(template_path)
+
+# creat a static_type_list in config.ini
+def cases_types_config(config_file_path):
+    cf = configparser.ConfigParser()
+    #with open(config_file_path, 'rb') as f:
+    #cf.read(config_file_path, encoding='utf-8', errors='ignore')
+    #cf.read(config_file_path, "rb")
+    cf.read(config_file_path, encoding='utf-8')
+    type_list = []
+    cases_types = cf.sections()
+    for type in cases_types:
+        if re.search('DESfile', type) != None and re.search('path', type) != None:
+            type_list.append(type)
+    str_type = ' '.join(str(type) for type in type_list)
+    cf.set("static_case_type", "type_list", str_type)
+    cf.write(open(config_file_path, "w+", encoding='utf-8'))
+
 if __name__ == "__main__":
+    config_ini_dir = os.getcwd() + r'\auto_test_config.ini'
     cf = configparser.ConfigParser()
     # config_ini_dir = os.getcwd() + r'\auto_test_config.ini'
     cf.read(config_ini_dir, encoding='utf-8')
@@ -389,14 +463,15 @@ if __name__ == "__main__":
 
     logging.debug('path1:' + org_result_path1)
     logging.debug('path2:' + org_result_path2)
-    write_template_path_ini(template_path)
+    write_template_path_ini(template_path, config_ini_dir)
     # write several types of path in config.ini 
-    config_dir = orgpath_sequence(org_result_path1, org_result_path2)
+    config_dir = orgpath_sequence(org_result_path1, org_result_path2, config_ini_dir)
     ini_write(config_dir[0], config_dir[1], config_ini_dir)
-    
+    cases_types_config(config_ini_dir)
     call_SAM_macro()
+    function_check_sheet(config_ini_dir)
     generate_contact_plots(config_dir[0], config_dir[1], config_ini_dir)
-    contact_pic_hooks(config_dir[0], config_dir[1], config_ini_dir)
+    contact_pic_hooks(config_ini_dir)
     call_Multi_macro()
     
 
