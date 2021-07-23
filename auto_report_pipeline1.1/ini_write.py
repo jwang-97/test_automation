@@ -29,7 +29,10 @@ def ini_write(org_import_dir1, org_import_dir2, config_file_path):
                     for sub_path, sub_dir_list, sub_file_list in os.walk(os.path.join(path, dir_name)):
                         for file_name in sub_file_list:
                             if re.search("Wiley.des", file_name) != None:
-                                cf.set("DESfile_E616_path", "cases_path"+ str(i), os.path.join(sub_path, file_name))
+                                section_name = "DESfile_" + "E616" + "_path"
+                                if not cf.has_section(section_name):
+                                    cf.add_section(section_name)
+                                cf.set(section_name, "cases_path"+ str(i), os.path.join(sub_path, file_name))
                                 #cf.write(open(config_file_path, "w+", encoding='utf-8'))
                                 break
                 #write stinger file_path
@@ -38,7 +41,10 @@ def ini_write(org_import_dir1, org_import_dir2, config_file_path):
                         for file_name in sub_file_list:
                             if re.search('.des', file_name) != None:
                                 type_name = dir_name.split('_')
-                                cf.set("DESfile_" + type_name[1] + "_path", "cases_path"+ str(i), os.path.join(sub_path, file_name))
+                                section_name = "DESfile_" + type_name[1] + "_path"
+                                if not cf.has_section(section_name):
+                                    cf.add_section(section_name)
+                                cf.set(section_name, "cases_path"+ str(i), os.path.join(sub_path, file_name))
                                 #cf.write(open(config_file_path, "w+", encoding='utf-8'))
                 #write dynamic file_path
                 elif re.search("links", dir_name) != None:
@@ -46,7 +52,10 @@ def ini_write(org_import_dir1, org_import_dir2, config_file_path):
                         for sub_dir_name in sub_dir_list:
                             while re.match('build', sub_dir_name) != None:
                                 #type_name = dir_name.split('_')
-                                cf.set("bit_base_directory", "bit"+ str(i) +"_directory", os.path.join(sub_path, sub_dir_name))
+                                section_name = "bit_base_directory"
+                                if not cf.has_section(section_name):
+                                    cf.add_section(section_name)
+                                cf.set(section_name, "bit"+ str(i) +"_directory", os.path.join(sub_path, sub_dir_name))
                                 #cf.write(open(config_file_path, "w+", encoding='utf-8'))
                                 bln_build = True
                                 break
@@ -60,11 +69,17 @@ def ini_write(org_import_dir1, org_import_dir2, config_file_path):
                         for file_name in sub_file_list:
                             if re.search('summary_doc', file_name) != None:
                                 # type_name = dir_name.split('_')
-                                cf.set("contact_summary_doc_dir", "cases_path"+ str(i), os.path.join(sub_path, file_name))
+                                section_name = "contact_summary_doc_dir"
+                                if not cf.has_section(section_name):
+                                    cf.add_section(section_name)
+                                cf.set(section_name, "cases_path"+ str(i), os.path.join(sub_path, file_name))
                         for sub_dir_name in sub_dir_list:
                             if re.search('utility_files', sub_dir_name) != None:
                                 # type_name = dir_name.split('_')
-                                cf.set("contact_pic_dir", "cases_path"+ str(i), os.path.join(sub_path, sub_dir_name))
+                                section_name = "contact_pic_dir"
+                                if not cf.has_section(section_name):
+                                    cf.add_section(section_name)
+                                cf.set(section_name, "cases_path"+ str(i), os.path.join(sub_path, sub_dir_name))
                 #write other-type static file_path 
                 elif re.search("6", dir_name) != None and re.search("_", dir_name) != None and len(dir_name.split("_")) == 2:
                     for sub_path, sub_dir_list, sub_file_list in os.walk(os.path.join(path, dir_name)):
@@ -422,20 +437,33 @@ def function_check_sheet(config_path):
         cell.text = r
     prs.save(template_path)
 
-# creat a static_type_list in config.ini
+# creat a list of static types in config.ini, those types would be shown in ppt.
 def cases_types_config(config_file_path):
     cf = configparser.ConfigParser()
-    #with open(config_file_path, 'rb') as f:
-    #cf.read(config_file_path, encoding='utf-8', errors='ignore')
-    #cf.read(config_file_path, "rb")
     cf.read(config_file_path, encoding='utf-8')
     type_list = []
+    #find all sections in config.ini
     cases_types = cf.sections()
     for type in cases_types:
         if re.search('DESfile', type) != None and re.search('path', type) != None:
-            type_list.append(type)
+            #confirm the section is not empty 
+            if cf.get(type, "cases_path1") != None and cf.get(type, "cases_path1") != None:
+                type_list.append(type)
     str_type = ' '.join(str(type) for type in type_list)
     cf.set("static_case_type", "type_list", str_type)
+    cf.write(open(config_file_path, "w+", encoding='utf-8'))
+
+#Clean the static value in the config.ini
+def clean_config_file(config_file_path):
+    cf = configparser.ConfigParser()
+    cf.read(config_file_path, encoding='utf-8')
+    #find all sections in config.ini
+    cases_types = cf.sections()
+    # rsserve_list = ['templatefile', 'original', 'GEMs_Ref_Info', 'merge_template', 'Contact_Analysis_Inputs']
+    for type in cases_types:
+        if re.search('path', type) != None and re.search('DESfile', type) != None:
+            cf.set(type, "cases_path1", "")
+            cf.set(type, "cases_path2", "")
     cf.write(open(config_file_path, "w+", encoding='utf-8'))
 
 if __name__ == "__main__":
@@ -463,6 +491,7 @@ if __name__ == "__main__":
 
     logging.debug('path1:' + org_result_path1)
     logging.debug('path2:' + org_result_path2)
+    clean_config_file(config_ini_dir)
     write_template_path_ini(template_path, config_ini_dir)
     # write several types of path in config.ini 
     config_dir = orgpath_sequence(org_result_path1, org_result_path2, config_ini_dir)
