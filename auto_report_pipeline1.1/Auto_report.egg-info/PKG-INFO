@@ -1,0 +1,10 @@
+Metadata-Version: 2.1
+Name: Auto-report
+Version: 0.0.0
+Summary: UNKNOWN
+Home-page: UNKNOWN
+License: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN
+Provides-Extra: async
+Provides-Extra: dotenv
