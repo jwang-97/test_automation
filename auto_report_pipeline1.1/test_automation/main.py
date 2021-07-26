@@ -123,7 +123,9 @@ def write_template_path_ini(tpl_path, config_path):
     cf = configparser.ConfigParser()
     cf.read(config_path, encoding='utf-8')
     if os.path.exists(tpl_path) == False:
-        template_file = os.getcwd() + r'\60095160_RevA_CPC_Template_v4.04.pptx'
+        path = os.getcwd()
+        # parent = os.path.abspath(os.path.join(path, os.pardir))
+        template_file = path + r'\60095160_RevA_CPC_Template_v4.04.pptx'
         cf.set("templatefile_path", "template_path", template_file)
         logging.debug('Invalid template path, default read template under the current path')
         logging.debug('ppttemplate-path:' + template_file)
@@ -141,7 +143,7 @@ def call_SAM_macro():
         xl.Visible = True
         xl.Application.ScreenUpdating = False
         str = os.getcwd()
-        xl.Workbooks.Open(Filename = str + "\\SAM_v11.78.xlsm")
+        xl.Workbooks.Open(Filename = str + r"\test_automation\SAM_v11.78.xlsm")
         time.sleep(5)
         #xl.ThisWorkbook.Activate
         # xl.Workbooks("Sheet1").Activate
@@ -164,7 +166,7 @@ def call_Multi_macro():
     xl.Visible = True
     xl.Application.ScreenUpdating = False
     str = os.getcwd()
-    xl.Workbooks.Open(Filename = str + "\\Multi_Bit_Compare_v2.52.xlsm")
+    xl.Workbooks.Open(Filename = str + r"\test_automation\Multi_Bit_Compare_v2.52.xlsm")
     time.sleep(5)
     logging.debug('Open Multifile success')
     #Run Macro
@@ -467,7 +469,9 @@ def clean_config_file(config_file_path):
     cf.write(open(config_file_path, "w+", encoding='utf-8'))
 
 if __name__ == "__main__":
-    config_ini_dir = os.getcwd() + r'\auto_test_config.ini'
+    path = os.getcwd()
+    # parent = os.path.abspath(os.path.join(path, os.pardir))
+    config_ini_dir = path + r'\docs\auto_test_config.ini'
     cf = configparser.ConfigParser()
     # config_ini_dir = os.getcwd() + r'\auto_test_config.ini'
     cf.read(config_ini_dir, encoding='utf-8')
