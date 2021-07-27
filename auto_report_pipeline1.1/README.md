@@ -25,7 +25,7 @@ Its function is mainly to automatically generate a ppt test report based on the 
 * Under Windows
 * Office software
 * Python environment
-* Excel's *macro trust* option is turned on
+* Excel's *macro trust* option is turned on.(https://support.microsoft.com/en-us/office/enable-or-disable-macros-in-office-files-12b036fd-d140-4e74-b45e-16fed1a7e5c6)
 
 # Code structure description
 
