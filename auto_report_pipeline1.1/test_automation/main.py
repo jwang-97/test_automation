@@ -345,15 +345,15 @@ def generate_contact_plots(org_dir1, org_dir2, config_path):
         p1.font.size = pptx.util.Pt(29)
         iCase += 1
     for type in doc_type_list:
-        # line 1 points
+        # line1's points
         x1 = read_summary_doc(1, "wob", config_path)
         y1 = read_summary_doc(1, type, config_path)
-        # plotting the line 1 points 
+        # plotting the line1's points 
         plt.plot(x1, y1, label = "build" + time_title1, color='c')
-        # line 2 points
+        # line2's points
         x2 = read_summary_doc(2, "wob", config_path)
         y2 = read_summary_doc(2, type, config_path)
-        # plotting the line 2 points 
+        # plotting the line2's points 
         plt.plot(x2, y2, label = "build" + time_title2, color='m')
         # add Horizontal line
         plt.grid(axis="y")
@@ -449,7 +449,7 @@ def cases_types_config(config_file_path):
     for type in cases_types:
         if re.search('DESfile', type) != None and re.search('path', type) != None:
             #confirm the section is not empty 
-            if cf.get(type, "cases_path1") != None and cf.get(type, "cases_path1") != None:
+            if cf.get(type, "cases_path1") != "" and cf.get(type, "cases_path2") != "":
                 type_list.append(type)
     str_type = ' '.join(str(type) for type in type_list)
     cf.set("static_case_type", "type_list", str_type)
@@ -466,6 +466,7 @@ def clean_config_file(config_file_path):
         if re.search('path', type) != None and re.search('DESfile', type) != None:
             cf.set(type, "cases_path1", "")
             cf.set(type, "cases_path2", "")
+    cf.set("static_case_type", "type_list", "")
     cf.write(open(config_file_path, "w+", encoding='utf-8'))
 
 if __name__ == "__main__":
