@@ -1,4 +1,4 @@
-import os, re, logging, time, argparse, pptx, pptx.util, csv, io
+import os, re, logging, time, argparse, pptx, pptx.util, csv, io, datetime
 import configparser
 import win32com.client as win32
 # import xlwings as xw
@@ -77,6 +77,23 @@ def ini_write(org_import_dir1, org_import_dir2, config_file_path):
                             if re.search('utility_files', sub_dir_name) != None:
                                 # type_name = dir_name.split('_')
                                 section_name = "contact_pic_dir"
+                                if not cf.has_section(section_name):
+                                    cf.add_section(section_name)
+                                cf.set(section_name, "cases_path"+ str(i), os.path.join(sub_path, sub_dir_name))
+                #write autoforce file_path
+                elif re.search("AF", dir_name) != None and re.search("_", dir_name) != None and len(dir_name.split("_")) == 2:
+                    for sub_path, sub_dir_list, sub_file_list in os.walk(os.path.join(path, dir_name)):
+                        # for file_name in sub_file_list:
+                        #     if re.search('utility_files', file_name) != None:
+                        #         # type_name = dir_name.split('_')
+                        #         section_name = "contact_summary_doc_dir"
+                        #         if not cf.has_section(section_name):
+                        #             cf.add_section(section_name)
+                        #         cf.set(section_name, "cases_path"+ str(i), os.path.join(sub_path, file_name))
+                        for sub_dir_name in sub_dir_list:
+                            if re.search('utility_files', sub_dir_name) != None:
+                                type_name = dir_name.split('_')[1]
+                                section_name = "autoforce_" + type_name + "_dir"
                                 if not cf.has_section(section_name):
                                     cf.add_section(section_name)
                                 cf.set(section_name, "cases_path"+ str(i), os.path.join(sub_path, sub_dir_name))
@@ -314,6 +331,12 @@ def generate_contact_plots(org_dir1, org_dir2, config_path):
     cf.read(config_path, encoding='utf-8')
     template_path = cf.get("merge_template", "dirct")
     prs = Presentation(template_path)
+    slide = prs.slides.add_slide(prs.slide_layouts[7])
+    slide.shapes.title.text = "Contact Analysis"
+    slide = prs.slides.add_slide(prs.slide_layouts[10])
+    slide.shapes.title.text = "Contact Analysis"
+    # slide.shapes[1].textrange.text = "Comparison of Baseline Bit and Proposed Bit MDOC Analysis"
+    # slide.placeholders[0].text = "Comparison of Baseline Bit and Proposed Bit MDOC Analysis"
     org_import_dir = (org_dir1, org_dir2)
     time_title1 = cf.get("profile_title", "title1")
     time_title2 = cf.get("profile_title", "title2")
@@ -392,6 +415,113 @@ def generate_contact_plots(org_dir1, org_dir2, config_path):
         pic1 = slide.shapes.add_picture(buffer_png, pic_left, pic_top, pic_width, pic_height)
         plt.close()
         buffer_png.close()
+    prs.save(template_path)
+    
+def number_autoforce_pic(pic_path1, pic_path2):
+    auto_pic_list = [""]*6
+    for autoforce_pic in pic_path1:
+        if re.search('curve_fb', autoforce_pic) != None :
+            auto_pic_list[0] = autoforce_pic
+        elif re.search('bitforce_fb', autoforce_pic) != None :
+            auto_pic_list[1] = autoforce_pic
+        elif re.search('profile_fb', autoforce_pic) != None :
+            auto_pic_list[2] = autoforce_pic
+    for autoforce_pic in pic_path2:
+        if re.search('curve_fb', autoforce_pic) != None :
+            auto_pic_list[3] = autoforce_pic
+        elif re.search('bitforce_fb', autoforce_pic) != None :
+            auto_pic_list[4] = autoforce_pic
+        elif re.search('profile_fb', autoforce_pic) != None :
+            auto_pic_list[5] = autoforce_pic
+    return auto_pic_list
+
+def get_atfb_file(path_name):
+    atfblist = []
+    for parent, dirnames, filenames in os.walk(path_name):
+        for filename in filenames:
+            if filename.lower().endswith(('.atfb')):
+                atfblist.append(os.path.join(parent, filename))
+        return atfblist
+
+def get_simulation_time(atfblist):
+    for file in atfblist:
+        with open(file, "r", encoding="gbk", errors="ignore") as atfb_data:
+            lines = atfb_data.read().splitlines()
+            # find_info = [ string for string in lines if "Cost Hour=" in string]
+            find_info = [ string for string in lines if len(string.split())> 6]
+            info_list = [ string for string in find_info[0].split() if ":" in string]
+            info_list.append(datetime.datetime.strptime(info_list[1], '%H:%M:%S') - datetime.datetime.strptime(info_list[0], '%H:%M:%S'))
+    return info_list
+    
+    
+    
+def autoforce_pic_hooks(config_path):
+    cf = configparser.ConfigParser()
+    cf.read(config_path, encoding='utf-8')
+    template_path = cf.get("merge_template", "dirct")
+    prs = Presentation(template_path)
+    slide = prs.slides.add_slide(prs.slide_layouts[7])
+    slide.shapes.title.text = "Autoforce Comparison"
+    autoforce_pic_path = []
+    cases_types = cf.sections()
+    for type in cases_types:
+        if re.search('autoforce', type) != None and re.search('dir', type) != None:
+            autoforce_pic_path.append(type)
+    pic_path = ['']*2
+    auto_pic_number = ['']*3
+    autoforce_pic_list = []
+    simulation_time = ['']*2
+    simulation_time_list = []
+    for autoforce_type in autoforce_pic_path:
+        i = 0
+        while i <= 1:
+            #get list of contact_pictures' path
+            pic_path[i] = get_img_file(cf.get(autoforce_type, "cases_path" + str(i+1)))
+            parent_path = cf.get(autoforce_type, "cases_path" + str(i+1))
+            parent_path = parent_path.replace(parent_path.split("\\")[-1], '')
+            simulation_time[i] = get_simulation_time(get_atfb_file(parent_path))
+            for time in simulation_time[i]:
+                simulation_time_list.append(str(time))
+            i += 1
+        autoforce_pic_list = number_autoforce_pic(pic_path[0], pic_path[1])
+        pic_left = [2.7 * Cm(0.7), 2.7 * Cm(4.1), 2.7 * Cm(4.1),2.7 * Cm(8.4), 2.7 * Cm(11.8), 2.7 * Cm(11.8)]   
+        pic_top = [2.7 * Cm(1.5), 2.7 * Cm(1.5), 2.6 * Cm(5.2),2.7 * Cm(1.5), 2.7 * Cm(1.5), 2.6 * Cm(5.2)]
+        pic_width = [2.7 * Cm(3.3), 2.7 * Cm(3.3), 2.7 * Cm(3.3),2.7 * Cm(3.3), 2.7 * Cm(3.3), 2.7 * Cm(3.3)]
+        pic_height = [2.7 * Cm(5), 2.7 * Cm(3.3), 2.7 * Cm(1.7),2.7 * Cm(5), 2.7 * Cm(3.3), 2.7 * Cm(1.7)]
+        # pic_left = [int(prs.slide_width*0.08), int(prs.slide_width*0.58)]
+        # pic_top = int(prs.slide_height*0.3)
+        # pic_width = int(prs.slide_width*0.4)
+        # pic_height = int(prs.slide_height*0.6)
+        ipath = 0
+        time_title1 = cf.get("profile_title", "title1")
+        time_title2 = cf.get("profile_title", "title2")
+        
+        text_array = ("Simulation Start: " + simulation_time_list[0] + "         " + "Simulation Duration: " + simulation_time_list[1] + "\n" + "Simulation End: " + simulation_time_list[2] + "         " + "from .atfb file",
+                        "Build"+ time_title1, 
+                        "Simulation Start: " + simulation_time_list[3] + "         " + "Simulation Duration: " + simulation_time_list[4] + "\n" + "Simulation End: " + simulation_time_list[5] + "         " + "from .atfb file",
+                        "Build" + time_title2)
+        slide = prs.slides.add_slide(prs.slide_layouts[1])
+        slide.shapes.title.text = "Autoforce – PDC test"
+        # img1 = cv2.imread(autoforce_pic_path[0])
+        # img2 = cv2.imread(autoforce_pic_path[1])
+        inum = 0
+        while inum < 6:
+            pic = slide.shapes.add_picture(autoforce_pic_list[inum], pic_left[inum], pic_top[inum], pic_width[inum], pic_height[inum])
+            inum += 1
+        i = 0
+        while i < 4:
+            if i == 0:
+                tb = slide.shapes.add_textbox(2.7 * Cm(0.5), 2.5 * Cm(7.2), 2.7 * Cm(7.2), 2.7 * Cm(1))
+            elif i == 1:
+                tb = slide.shapes.add_textbox(2.7 * Cm(2.7), 2.1 * Cm(1), 2.7 * Cm(0.6), 2.7 * Cm(0.5))
+            elif i == 2:
+                tb = slide.shapes.add_textbox(2.7 * Cm(8.2), 2.5 * Cm(7.2), 2.7 * Cm(7.2), 2.7 * Cm(1))
+            elif i == 3:
+                tb = slide.shapes.add_textbox(2.7 * Cm(10.3), 2.1 * Cm(1), 2.7 * Cm(0.6), 2.7 * Cm(0.5))
+            p1 =  tb.text_frame.add_paragraph()
+            p1.text = text_array[i]
+            p1.font.size = pptx.util.Pt(20)
+            i+=1
     prs.save(template_path)
 
 def function_check_sheet(config_path):
@@ -503,11 +633,11 @@ if __name__ == "__main__":
     ini_write(config_dir[0], config_dir[1], config_ini_dir)
     cases_types_config(config_ini_dir)
     call_SAM_macro()
+    autoforce_pic_hooks(config_ini_dir)
     function_check_sheet(config_ini_dir)
     generate_contact_plots(config_dir[0], config_dir[1], config_ini_dir)
     contact_pic_hooks(config_ini_dir)
     call_Multi_macro()
-    
 
     #ini_write(r'\\bgc-nas002\ideas_engine_folder\Share\Drilling_software_development\Work\Work-2021\release_testing_for_cpc\testing-cases', r'C:\Users\JWang294\Documents\projectfile\auto_test_config.ini')
     #config_sequence(r'\\bgc-nas002\ideas_engine_folder\Share\Drilling_software_development\Work\Work-2021\release_testing_for_cpc\testing-cases', r'\\bgc-nas002\ideas_engine_folder\Share\Drilling_software_development\Work\Work-2021\release_testing_for_cpc\testing-cases')
